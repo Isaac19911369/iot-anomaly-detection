@@ -1,0 +1,7 @@
+# Same as default.yaml, with MLflow tracking against the compose service.
+model:
+  name: conv_ae
+tracking:
+  enabled: true
+  tracking_uri: http://mlflow:5000
+  experiment: iot-anomaly-detection

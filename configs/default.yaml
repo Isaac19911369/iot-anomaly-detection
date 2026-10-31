@@ -1,0 +1,32 @@
+# Default configuration — every key is optional and falls back to the dataclass default.
+data:
+  root: data/skab
+  subsets: [valve1, valve2, other]
+  train_rows: 400      # SKAB protocol: head of each file is anomaly-free
+  window: 60           # 60 s of 1 Hz readings
+
+model:
+  name: conv_ae        # pca | iforest | lstm_ae | conv_ae
+  hidden_dim: 32
+  latent_dim: 8
+  num_layers: 1
+  dropout: 0.1
+  score_on: last     # last | window
+
+training:
+  epochs: 40
+  batch_size: 32
+  lr: 0.001
+  seed: 42
+  device: auto         # auto | cpu | cuda | mps
+
+threshold:
+  quantile: 0.99
+  scale: 1.5
+
+tracking:
+  enabled: false
+  tracking_uri: mlruns
+  experiment: iot-anomaly-detection
+
+output_dir: artifacts

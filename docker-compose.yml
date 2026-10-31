@@ -1,0 +1,54 @@
+# Local stack: scoring API + TimescaleDB for scores + MLflow tracking server.
+#   docker compose run --rm trainer   # download SKAB, train and register a model
+#   docker compose up -d api          # start the API (and its dependencies)
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: iot
+      POSTGRES_PASSWORD: iot
+      POSTGRES_DB: iot
+    ports: ["5432:5432"]
+    volumes: [tsdb:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot"]
+      interval: 5s
+      retries: 10
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts --serve-artifacts
+    ports: ["5000:5000"]
+    volumes: [mlflow:/mlflow]
+
+  trainer:
+    build: .
+    profiles: [tools]
+    user: root
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    command: >
+      sh -c "iot-anomaly download &&
+             iot-anomaly -c configs/docker.yaml train --model conv_ae"
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./data:/app/data
+    depends_on: [mlflow]
+
+  api:
+    build: .
+    environment:
+      MODEL_DIR: /app/artifacts/model
+      DATABASE_URL: postgresql://iot:iot@timescaledb:5432/iot
+    ports: ["8000:8000"]
+    volumes: [./artifacts:/app/artifacts:ro]
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+volumes:
+  tsdb:
+  mlflow:
