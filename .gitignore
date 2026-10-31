@@ -4,8 +4,8 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
-data/
-artifacts/
+/data/
+/artifacts/
 mlruns/
 mlartifacts/
 *.pt
